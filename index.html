@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>منصة أنس التعليمية</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        :root { 
+            --primary: #00d2ff; 
+            --secondary: #ff9d00; 
+            --card-bg: rgba(255, 255, 255, 0.1); /* زجاجي شفاف جداً */
+            --text: #ffffff; 
+            --plyr-color-main: var(--primary); 
+        }
+
+        /* الخلفية المتحركة السحرية */
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+            background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #00d2ff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite; /* حركة الألوان */
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* تأثير الزجاج لصندوق الدخول */
+        .auth-box { 
+            max-width: 450px; 
+            margin: 60px auto; 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        .auth-box h3 { color: var(--primary); font-size: 0.9rem; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0,210,255,0.5); }
+        .auth-box h2 { font-size: 2rem; margin-bottom: 10px; color: #fff; }
+
+        .container { max-width: 1000px; margin: auto; }
+
+        /* خانات إدخال عصرية شفافة */
+        input { 
+            width: 100%; 
+            padding: 15px; 
+            margin: 12px 0; 
+            border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            box-sizing: border-box; 
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        input::placeholder { color: rgba(255,255,255,0.6); }
+
+        input:focus { 
+            outline: none; 
+            background: rgba(255,255,255,0.2);
+            border-color: var(--primary); 
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); 
+        }
+
+        /* زرار متوهج */
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(45deg, var(--primary), #0072ff); 
+            color: white; 
+            border: none; 
+            border-radius: 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1.1rem;
+            transition: 0.4s; 
+            box-shadow: 0 8px 20px rgba(0, 210, 255, 0.3);
+            margin-top: 10px;
+        }
+
+        button:hover { 
+            transform: scale(1.03); 
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.6); 
+        }
+
+        .video-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 25px; 
+            margin-top: 40px; 
+        }
+
+        /* كروت الدروس بنمط الـ Dark Glass */
+        .card { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(10px);
+            border-radius: 25px; 
+            overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            padding: 20px; 
+            transition: 0.4s ease;
+        }
+
+        .card:hover { 
+            transform: translateY(-10px); 
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .card h3 { margin-top: 0; color: #fff; font-size: 1.2rem; }
+
+        .plyr { border-radius: 15px; overflow: hidden; height: 200px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+        .locked-overlay { 
+            background: rgba(0,0,0,0.8); 
+            height: 200px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+            text-align: center; 
+            border-radius: 15px; 
+            padding: 20px;
+        }
+
+        .locked-overlay span { font-weight: bold; color: var(--secondary); font-size: 1.1rem; }
+
+        .wa-btn { 
+            background: #25d366; 
+            text-decoration: none; 
+            color: white; 
+            padding: 12px 24px; 
+            border-radius: 10px; 
+            display: inline-block; 
+            margin-top: 15px; 
+            font-weight: bold;
+        }
+
+        #authSection, #mainSection { display: none; }
+
+        .header-main {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div id="authSection" class="auth-box">
+    <h3> مطور المنصه ( أنس مصطفى فرج ) </h3>
+    <h2 id="authTitle">👋 تسجيل الدخول </h2>
+    <p id="authDesc">أهلاً بك! يرجى إدخال بياناتك للمتابعة.</p>
+    <input type="text" id="userName" placeholder="الاسم بالكامل">
+    <input type="text" id="userPhone" placeholder="رقم الهاتف (11 رقم)">
+    <input type="password" id="userPass" placeholder="كلمة السر">
+    <button id="authBtn" onclick="handleAuth()">اكتشف دروسك</button>
+    <a href="#" onclick="toggleAuth()" style="color: rgba(255,255,255,0.7); display: block; margin-top: 20px; text-decoration: none; font-size: 0.9rem;">إنشاء حساب جديد</a>
+</div>
+
+<div id="mainSection" class="container">
+    <div class="header-main">
+        <h2 style="margin:0; color:#fff;">📚 دروسي التعليمية</h2>
+        <button onclick="logout()" style="width: auto; padding: 10px 25px; background: rgba(255,255,255,0.2); font-size: 0.9rem; box-shadow: none;">خروج</button>
+    </div>
+    <div class="video-grid" id="videoGrid">جاري مزامنة المحتوى...</div>
+</div>
+
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXnqZnuUQr-9NALizGwvhMPsj649VGoJs",
+    authDomain: "anas-lms.firebaseapp.com",
+    projectId: "anas-lms",
+    storageBucket: "anas-lms.firebasestorage.app",
+    messagingSenderId: "410918913877",
+    appId: "1:410918913877:web:3eb877fb6e21289eb791dc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let isLogin = true;
+  let currentUser = JSON.parse(localStorage.getItem('anasUser'));
+
+  if(currentUser) {
+    showMain();
+  } else {
+    document.getElementById('authSection').style.display = 'block';
+  }
+
+  window.toggleAuth = () => {
+    isLogin = !isLogin;
+    document.getElementById('authTitle').innerText = isLogin ? "👋 تسجيل الدخول" : "🆕 إنشاء حساب جديد";
+    document.getElementById('authBtn').innerText = isLogin ? "اكتشف دروسك" : "بدء الرحلة التعليمية";
+    document.getElementById('authDesc').innerText = isLogin ? "أهلاً بك! يرجى إدخال بياناتك للمتابعة." : "سجل الآن لتصل إلى أقوى المحتويات التعليمية.";
+  };
+
+  window.handleAuth = async () => {
+    const name = document.getElementById('userName').value;
+    const phone = document.getElementById('userPhone').value;
+    const pass = document.getElementById('userPass').value;
+
+    if(!phone || !pass) return alert("اكمل البيانات!");
+
+    if(!isLogin) {
+        if(!/^01[0125][0-9]{8}$/.test(phone)) return alert("رقم الهاتف غير صحيح!");
+        await setDoc(doc(db, "users", phone), { name, phone, pass, permissions: [] });
+        alert("تم إنشاء حسابك بنجاح!");
+    }
+
+    const userSnap = await getDoc(doc(db, "users", phone));
+    if(userSnap.exists() && userSnap.data().pass === pass) {
+        localStorage.setItem('anasUser', JSON.stringify(userSnap.data()));
+        location.reload();
+    } else {
+        alert("بيانات خاطئة!");
+    }
+  };
+
+  async function showMain() {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('mainSection').style.display = 'block';
+    loadVideos();
+  }
+
+  async function loadVideos() {
+    const querySnapshot = await getDocs(collection(db, "videos"));
+    const grid = document.getElementById('videoGrid');
+    grid.innerHTML = "";
+    
+    const userUpdate = await getDoc(doc(db, "users", currentUser.phone));
+    const myPermissions = userUpdate.data().permissions || [];
+
+    querySnapshot.forEach((vDoc) => {
+      const vid = vDoc.data();
+      const vidId = vDoc.id;
+      const isPaid = vid.price > 0;
+      const hasAccess = myPermissions.includes(vidId);
+
+      const vidUrl = vid.videoUrl;
+      const youtubeId = vidUrl.includes('embed/') ? vidUrl.split('embed/')[1].split('?')[0] : vidUrl;
+
+      let content = "";
+      if (isPaid && !hasAccess) {
+        content = `
+          <div class="locked-overlay">
+            <span>🔒 محتوى بريميوم (${vid.price} ج.م)</span>
+            <small style="color:#ccc">هذا الدرس يحتاج إلى تفعيل يدوي</small>
+            <a href="https://wa.me/201278115809?text=تفعيل الدرس: ${vid.title}" class="wa-btn">اشترك الآن</a>
+          </div>`;
+      } else {
+        content = `
+          <div class="plyr__video-embed" id="player-${vidId}">
+            <iframe 
+                src="https://www.youtube.com/embed/${youtubeId}?origin=${window.location.origin}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1" 
+                allowfullscreen allowtransparency allow="autoplay">
+            </iframe>
+          </div>`;
+      }
+
+      grid.innerHTML += `<div class="card"><h3>${vid.title}</h3>${content}</div>`;
+      
+      if (!isPaid || hasAccess) {
+          setTimeout(() => {
+              new Plyr(`#player-${vidId}`, {
+                  controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+                  settings: ['quality', 'speed']
+              });
+          }, 100);
+      }
+    });
+  }
+
+  window.logout = () => { localStorage.clear(); location.reload(); };
+</script>
+</body>
+</html>
