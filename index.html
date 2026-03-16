@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>منصة أنس التعليمية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --main: #e94560; --bg: #1a1a2e; --card: #16213e; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; }
+        .auth-box, .container { max-width: 800px; margin: auto; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #0f3460; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--main); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { transform: scale(1.02); background: #ff4d6d; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+        .card { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid #30475e; padding: 15px; position: relative; }
+        iframe { width: 100%; height: 200px; border-radius: 10px; border: none; }
+        .locked-overlay { background: rgba(0,0,0,0.9); height: 200px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; border-radius: 10px; padding: 10px; }
+        .wa-btn { background: #25d366; text-decoration: none; color: white; padding: 10px; border-radius: 5px; display: inline-block; margin-top: 10px; }
+        #authSection, #mainSection { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="authSection" class="auth-box">
+    <h2 id="authTitle">👋 تسجيل الدخول</h2>
+    <p id="authDesc">أهلاً بك! يرجى إدخال بياناتك للمتابعة.</p>
+    <input type="text" id="userName" placeholder="الاسم بالكامل">
+    <input type="text" id="userPhone" placeholder="رقم الهاتف (11 رقم)">
+    <input type="password" id="userPass" placeholder="كلمة السر">
+    <button id="authBtn" onclick="handleAuth()">دخول</button>
+    <a href="#" onclick="toggleAuth()" style="color: #ccc; display: block; margin-top: 15px;">تبديل بين دخول / إنشاء حساب</a>
+</div>
+
+<div id="mainSection" class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>📚 دروسي التعليمية</h2>
+        <button onclick="logout()" style="width: auto; padding: 5px 15px; background: #555;">خروج</button>
+    </div>
+    <div class="video-grid" id="videoGrid">جاري تحميل الدروس...</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXnqZnuUQr-9NALizGwvhMPsj649VGoJs",
+    authDomain: "anas-lms.firebaseapp.com",
+    projectId: "anas-lms",
+    storageBucket: "anas-lms.firebasestorage.app",
+    messagingSenderId: "410918913877",
+    appId: "1:410918913877:web:3eb877fb6e21289eb791dc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let isLogin = true;
+  let currentUser = JSON.parse(localStorage.getItem('anasUser'));
+
+  // التحقق من حالة الدخول
+  if(currentUser) {
+    showMain();
+  } else {
+    document.getElementById('authSection').style.display = 'block';
+  }
+
+  window.toggleAuth = () => {
+    isLogin = !isLogin;
+    document.getElementById('authTitle').innerText = isLogin ? "👋 تسجيل الدخول" : "🆕 إنشاء حساب جديد";
+    document.getElementById('authBtn').innerText = isLogin ? "دخول" : "إنشاء حساب";
+    document.getElementById('authDesc').innerText = isLogin ? "" : "تأكد من حفظ الاسم ورقم الهاتف جيداً لتسجيل الدخول لاحقاً.";
+  };
+
+  window.handleAuth = async () => {
+    const name = document.getElementById('userName').value;
+    const phone = document.getElementById('userPhone').value;
+    const pass = document.getElementById('userPass').value;
+
+    if(!phone || !pass) return alert("اكمل البيانات!");
+
+    if(!isLogin) { // إنشاء حساب
+        if(!/^01[0125][0-9]{8}$/.test(phone)) return alert("رقم الهاتف غير صحيح!");
+        await setDoc(doc(db, "users", phone), { name, phone, pass, permissions: [] });
+        alert("تم إنشاء حسابك بنجاح!");
+    }
+
+    const userSnap = await getDoc(doc(db, "users", phone));
+    if(userSnap.exists() && userSnap.data().pass === pass) {
+        localStorage.setItem('anasUser', JSON.stringify(userSnap.data()));
+        location.reload();
+    } else {
+        alert("بيانات خاطئة!");
+    }
+  };
+
+  async function showMain() {
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('mainSection').style.display = 'block';
+    loadVideos();
+  }
+
+  async function loadVideos() {
+    const querySnapshot = await getDocs(collection(db, "videos"));
+    const grid = document.getElementById('videoGrid');
+    grid.innerHTML = "";
+    
+    // جلب بيانات المستخدم الحالية للتأكد من الصلاحيات
+    const userUpdate = await getDoc(doc(db, "users", currentUser.phone));
+    const myPermissions = userUpdate.data().permissions || [];
+
+    querySnapshot.forEach((vDoc) => {
+      const vid = vDoc.data();
+      const vidId = vDoc.id;
+      const isPaid = vid.price > 0;
+      const hasAccess = myPermissions.includes(vidId);
+
+      let content = "";
+      if (isPaid && !hasAccess) {
+        content = `
+          <div class="locked-overlay">
+            <span>🔒 درس مدفوع (${vid.price} ج.م)</span>
+            <small>حول المبلغ لـ 01278115809 وابعت سكرين بالتحويل ورقمك</small>
+            <a href="https://wa.me/201278115809?text=أريد تفعيل درس: ${vid.title}" class="wa-btn">واتساب للتفعيل</a>
+          </div>`;
+      } else {
+        content = `<iframe src="${vid.videoUrl}" allowfullscreen></iframe>`;
+      }
+
+      grid.innerHTML += `<div class="card"><h3>${vid.title}</h3>${content}</div>`;
+    });
+  }
+
+  window.logout = () => { localStorage.clear(); location.reload(); };
+</script>
+</body>
+</html>
