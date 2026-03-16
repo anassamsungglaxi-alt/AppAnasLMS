@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تسجيل الدخول - منصة أنس</title>
+    <style>
+        body { font-family: sans-serif; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #16213e; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.4); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; outline: none; }
+        button { width: 100%; padding: 10px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .reg-link { margin-top: 15px; display: block; color: #e94560; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h2>تسجيل الدخول 🔑</h2>
+    <input type="text" id="loginPhone" placeholder="رقم الموبايل">
+    <input type="password" id="loginPass" placeholder="كلمة السر">
+    <button onclick="login()">دخول</button>
+    <a href="register.html" class="reg-link">أريد إنشاء حساب جديد</a>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXnqZnuUQr-9NALizGwvhMPsj649VGoJs",
+    authDomain: "anas-lms.firebaseapp.com",
+    projectId: "anas-lms",
+    storageBucket: "anas-lms.firebasestorage.app",
+    messagingSenderId: "410918913877",
+    appId: "1:410918913877:web:3eb877fb6e21289eb791dc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.login = async () => {
+    const phone = document.getElementById('loginPhone').value;
+    const pass = document.getElementById('loginPass').value;
+
+    try {
+        const email = phone + "@anas-platform.com"; // نفس الدومين الموحد
+        await signInWithEmailAndPassword(auth, email, pass);
+        alert("أهلاً بك يا بطل! جارٍ الدخول...");
+        // هنا هننقل الطالب للصفحة الرئيسية بعدين
+    } catch (e) {
+        alert("خطأ: تأكد من الرقم وكلمة السر (الرقم لازم يكون مسجل فعلاً بنفس الباسورد)");
+    }
+  }
+</script>
+</body>
+</html>
