@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم أنس - الرفع والمراقبة</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: white; padding: 20px; }
+        .section { background: #16213e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-bottom: 20px; border: 1px solid #e94560; }
+        h2 { color: #e94560; border-bottom: 2px solid #e94560; padding-bottom: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: none; box-sizing: border-box; }
+        .btn-upload { background: #e94560; color: white; border: none; padding: 15px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; margin-top: 10px; }
+        .btn-upload:hover { background: #ff4d6d; }
+        .user-card { background: #0f3460; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        progress { width: 100%; height: 25px; display: none; margin-top: 15px; }
+        label { font-size: 14px; color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="section">
+    <h2>🚀 رفع فيديو تعليمي جديد</h2>
+    <label>عنوان الفيديو:</label>
+    <input type="text" id="vidTitle" placeholder="مثلاً: شرح الدرس الأول">
+    
+    <label>سعر الفيديو (اكتب 0 لو عايز الفيديو مجاني):</label>
+    <input type="number" id="vidPrice" placeholder="مثلاً: 50">
+    
+    <label>اختار ملف الفيديو من جهازك:</label>
+    <input type="file" id="vidFile" accept="video/*">
+    
+    <button class="btn-upload" onclick="uploadVideo()">📤 ابدأ رفع الفيديو الآن</button>
+    
+    <progress id="uploadProgress" value="0" max="100"></progress>
+    <p id="statusText" style="text-align: center; color: #4caf50;"></p>
+</div>
+
+<div class="section">
+    <h2>👥 الطلاب المسجلين (للمراقبة)</h2>
+    <div id="usersList">جاري تحميل قائمة الطلاب...</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXnqZnuUQr-9NALizGwvhMPsj649VGoJs",
+    authDomain: "anas-lms.firebaseapp.com",
+    projectId: "anas-lms",
+    storageBucket: "anas-lms.firebasestorage.app",
+    messagingSenderId: "410918913877",
+    appId: "1:410918913877:web:3eb877fb6e21289eb791dc"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // دالة رفع الفيديو
+  window.uploadVideo = async () => {
+    const title = document.getElementById('vidTitle').value;
+    const price = document.getElementById('vidPrice').value;
+    const file = document.getElementById('vidFile').files[0];
+    const progressBar = document.getElementById('uploadProgress');
+    const statusText = document.getElementById('statusText');
+
+    if(!file || !title || price === "") { 
+        alert("يا بطل، لازم تختار فيديو وتكتب العنوان والسعر!"); 
+        return; 
+    }
+
+    // إنشاء مرجع للملف في Storage
+    const storageRef = ref(storage, 'videos/' + Date.now() + "_" + file.name);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    progressBar.style.display = "block";
+    statusText.innerText = "جاري الرفع... متقفلش الصفحة";
+
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        progressBar.value = progress;
+      }, 
+      (error) => { 
+        alert("حصل خطأ في الرفع: " + error.message); 
+        statusText.innerText = "";
+      }, 
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+          // حفظ البيانات في Firestore
+          await addDoc(collection(db, "videos"), {
+            title: title,
+            price: price,
+            videoUrl: downloadURL,
+            isLocked: parseInt(price) > 0,
+            createdAt: new Date()
+          });
+          statusText.innerText = "✅ تم الرفع والحفظ بنجاح يا أنس!";
+          alert("الفيديو بقى جاهز على المنصة!");
+          progressBar.style.display = "none";
+          // تصفير الخانات بعد الرفع
+          document.getElementById('vidTitle').value = "";
+          document.getElementById('vidPrice').value = "";
+          document.getElementById('vidFile').value = "";
+        });
+      }
+    );
+  };
+
+  // تحميل قائمة الطلاب
+  async function loadUsers() {
+    try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const listDiv = document.getElementById('usersList');
+        listDiv.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            listDiv.innerHTML += `
+                <div class="user-card">
+                    <div>
+                        <b>👤 ${data.fullName}</b><br>
+                        <small>📞 ${data.phone}</small>
+                    </div>
+                    <button style="background:#4caf50; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="alert('ID الطالب: ${data.uid}')">ID</button>
+                </div>`;
+        });
+    } catch(e) { console.log(e); }
+  }
+  loadUsers();
+</script>
+
+</body>
+</html>
