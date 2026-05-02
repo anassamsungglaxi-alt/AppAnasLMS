@@ -232,10 +232,28 @@
     if(!phone || !pass) return alert("اكمل البيانات!");
 
     if(!isLogin) {
-        if(!/^01[0125][0-9]{8}$/.test(phone)) return alert("رقم الهاتف غير صحيح!");
-        await setDoc(doc(db, "users", phone), { name, phone, pass, permissions: [] });
-        alert("تم إنشاء حسابك بنجاح!");
+    if(!/^01[0125][0-9]{8}$/.test(phone)) return alert("رقم الهاتف غير صحيح!");
+    
+    // 1. نتأكد الأول إذا كان الرقم مسجل قبل كده
+    const checkUser = await getDoc(doc(db, "users", phone));
+    if (checkUser.exists()) {
+        return alert("هذا الرقم مسجل بالفعل! حاول تسجيل الدخول.");
     }
+
+    // 2. لو مش موجود، ننشئ الحساب الجديد
+    await setDoc(doc(db, "users", phone), { 
+        name, 
+        phone, 
+        pass, 
+        permissions: [] 
+    });
+    alert("تم إنشاء حسابك بنجاح! يمكنك الآن تسجيل الدخول.");
+    
+    // نرجعه لوضع تسجيل الدخول تلقائياً
+    toggleAuth(); 
+    return;
+}
+
 
     const userSnap = await getDoc(doc(db, "users", phone));
     if(userSnap.exists() && userSnap.data().pass === pass) {
